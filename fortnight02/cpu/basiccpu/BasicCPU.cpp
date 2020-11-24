@@ -122,8 +122,8 @@ int BasicCPU::ID()
 		
 		// case TODO
 		// x101 Data Processing -- Register on page C4-278
-		case 0x1a000000: // x = 1
-		case 0x0a000000: // x = 0
+		case 0x1A000000: // x = 1
+		case 0x0A000000: // x = 0
 			fpOP = false;
 			return decodeDataProcReg();
 			break;
@@ -262,6 +262,18 @@ int BasicCPU::decodeDataProcReg() {
 			} else {
 				Rd = &(R[d]);
 			}
+
+			// atribuir ALUctrl
+			ALUctrl = ALUctrlFlag::ADD;
+			
+			// atribuir MEMctrl
+			MEMctrl = MEMctrlFlag::MEM_NONE;
+			
+			// atribuir WBctrl
+			WBctrl = WBctrlFlag::RegWrite;
+			
+			// atribuir MemtoReg
+			MemtoReg = false;
 
 			return 0;
 		default:
