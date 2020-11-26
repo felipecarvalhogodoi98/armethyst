@@ -35,9 +35,6 @@
 
 #include "BasicCPU.h"
 
-#include <iostream>
-using namespace std;
-
 BasicCPU::BasicCPU(Memory *memory) {
 	this->memory = memory;
 }
@@ -100,7 +97,7 @@ int BasicCPU::ID()
 	//		Acrescente os cases no switch já iniciado, para detectar o grupo
 	//		APENAS PARA A INSTRUÇÃO A SEGUIR:
 	//				'add w1, w1, w0'
-	//		que aparece na linha 40 de isummation.S e no endereço 0x74
+	//		que aparece na linha 43 de isummation.S e no endereço 0x68
 	//		de txt_isummation.o.txt.
 	//
 	// 		Deve-se detectar em IR o grupo da qual a instrução faz parte e
@@ -236,7 +233,7 @@ int BasicCPU::decodeDataProcReg() {
 	//		acrescentar um switch no estilo do switch de decodeDataProcImm,
 	//		e implementar APENAS PARA A INSTRUÇÃO A SEGUIR:
 	//				'add w1, w1, w0'
-	//		que aparece na linha 40 de isummation.S e no endereço 0x74
+	//		que aparece na linha 43 de isummation.S e no endereço 0x68
 	//		de txt_isummation.o.txt.
 	switch(IR & 0xFF200000){
 		
@@ -313,7 +310,7 @@ int BasicCPU::EXI()
 	//		Acrescente os cases no switch já iniciado, para acrescentar a
 	//		execução APENAS PARA A INSTRUÇÃO A SEGUIR:
 	//				'add w1, w1, w0'
-	//		que aparece na linha 40 de isummation.S e no endereço 0x74
+	//		que aparece na linha 43 de isummation.S e no endereço 0x68
 	//		de txt_isummation.o.txt.
 	//
 	// 		Verifique que ALUctrlFlag já tem declarado o tipo de operação
