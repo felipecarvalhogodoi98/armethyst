@@ -306,8 +306,8 @@ int BasicCPU::decodeDataProcFloat() {
 	// Acrescente os cases no switch já iniciado, para implementar a
 	// decodificação das instruções a seguir:
 	//		1. Em fpops.S
-	//			1.1 'fadd s0, s0, s0'
-	//				linha 42 de fpops.S, endereço 0x80 de txt_fpops.o.txt
+	//			1.1 'fadd s1, s1, s0'
+	//				linha 58 de fpops.S, endereço 0xBC de txt_fpops.o.txt
 	//				Seção C7.2.43 FADD (scalar), p. 1346 do manual.
 	//
 	// Verifique que ALUctrlFlag já tem declarados os tipos de
@@ -440,12 +440,23 @@ int BasicCPU::EXF()
  */
 int BasicCPU::MEM()
 {
-	// TODO
-	// Implementar o switch (MEMctrl) case MEMctrlFlag::XXX com as
-	// chamadas aos métodos corretos que implementam cada caso de
-	// acesso à memória de dados.
-	// não implementado
-
+	switch (MEMctrl) {
+	case MEMctrlFlag::READ32:
+		MDR = memory->readData32(ALUout);
+		return 0;
+	case MEMctrlFlag::WRITE32:
+		memory->writeData32(ALUout,*Rd);
+		return 0;
+	case MEMctrlFlag::READ64:
+		MDR = memory->readData64(ALUout);
+		return 0;
+	case MEMctrlFlag::WRITE64:
+		memory->writeData64(ALUout,*Rd);
+		return 0;
+	default:
+		return 0;
+	}
+    // não implementado
 	return 1;
 }
 
@@ -459,13 +470,20 @@ int BasicCPU::MEM()
  */
 int BasicCPU::WB()
 {
-	// TODO
-	// Implementar o switch (WBctrl) case WBctrlFlag::XXX com as
-	// atribuições corretas do registrador destino, quando houver, ou
-	// return 0 no caso WBctrlFlag::WB_NONE.
-	
-	// não implementado
-	return 1;
+    switch (WBctrl) {
+        case WBctrlFlag::WB_NONE:
+            return 0;
+        case WBctrlFlag::RegWrite:
+            if (MemtoReg) {
+                *Rd = MDR;
+            } else {
+                *Rd = ALUout;
+            }
+            return 0;
+        default:
+            // não implementado
+            return 1;
+    }
 }
 
 
