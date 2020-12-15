@@ -111,6 +111,7 @@ int BasicCPU::ID()
 	fpOp = FPOpFlag::FP_UNDEF;
 
 	int group = IR & 0x1E000000; // bits 28-25	
+	cout << ".....................................................IR " << group << endl;
 	switch (group)
 	{
 		//100x Data Processing -- Immediate
@@ -143,7 +144,8 @@ int BasicCPU::ID()
             break;
         //parte 4
         //000101 unconditional branch to a label on page C6-722
-        case 0x14000000:
+		case 0x16000000: //negativo
+        case 0x14000000: //positivo
             return decodeBranches();
             break;
 		// 101x Loads and Stores on page C4-237
@@ -174,8 +176,10 @@ int BasicCPU::decodeDataProcImm() {
 		instruction class. The encodings in this section are decoded from
 		Data Processing -- Immediate on page C4-232.
 	*/
-	switch (IR & 0xFF800000)
-	{
+	int group = IR & 0xFF800000;
+	switch (group)
+	{	
+		case 0x71000000:
 		case 0xD1000000:
 			//1 1 0 SUB (immediate) - 64-bit variant on page C6-1199
 			
@@ -198,7 +202,6 @@ int BasicCPU::decodeDataProcImm() {
 			} else {
 				Rd = &(R[d]);
 			}
-			
 			// atribuir ALUctrl
 			ALUctrl = ALUctrlFlag::SUB;
 			
@@ -231,7 +234,40 @@ int BasicCPU::decodeDataProcImm() {
 int BasicCPU::decodeBranches() {
 	//DONE
 	//instrução não implementada
-	
+	//declaração do imm26 valor imm6 na página C6-722
+	int32_t imm26 = (IR & 0x03FFFFFF);
+	//switch para pegar o branch
+	switch (IR & 0xFC000000) { //zera tudo que eu não quero deixando só os que quero testar
+		//000101 unconditional branch to a label on page C6-722 - verificação
+		case 0x14000000: //aplico a mascara pra ver se o que eu peguei é o que eu esperava
+			//exercício
+			// eliminação dos zeros à esquerda, casting explícito para int64_t e retorno dos 26 bits à posição original, mas com 2 bits 0 à direita
+			B = ((int64_t)(imm26 << 6) >> 4);
+			//declara reg a
+			A = PC; //salvo o endereço da instrução (PC) em A
+			//declara reg d
+			Rd = &PC; // salvo o endereço da instrução (PC) no registrador de destino
+			
+			// Atribuição das Flags
+
+			// atribuir ALUctrl
+			//estagio de execução
+			ALUctrl = ALUctrlFlag::ADD;//adição
+			// atribuir MEMctrl
+			//estágio de acesso a memoria
+			MEMctrl = MEMctrlFlag::MEM_NONE; //none pq nao acesso a memoria
+			// atribuir WBctrl
+			//estagio de write back
+			WBctrl = WBctrlFlag::RegWrite; //onde eu vou escrever a informação, que é no registrador, por isso o "RegWrite"
+			// atribuir MemtoReg
+			//segunda pleg para o estagio WB
+			MemtoReg=false;// como a info não vem da memoria é falso
+			
+			return 0;
+		default:
+			return 1;
+
+	}
 	return 1;
 }
 
@@ -312,7 +348,7 @@ int BasicCPU::decodeLoadStore() {
 
 			d = IR & 0x0000001F;
 			if (d == 31) {
-				Rd = &V[d]; //UNKNOWN; 
+				Rd = &V[d]; //UNKNOWN = 0; 
 			}
 			else {
 				Rd = &R[d];
