@@ -250,11 +250,13 @@ int BasicCPU::decodeBranches() {
 	//instrução não implementada
 	//declaração do imm26 valor imm6 na página C6-722
 	int32_t imm26 = (IR & 0x03FFFFFF);
+	int32_t imm19 = (IR & 0x00FFFFE0);
 	//switch para pegar o branch
 	switch (IR & 0xFC000000) { //zera tudo que eu não quero deixando só os que quero testar
-		//000101 unconditional branch to a label on page C6-722 - verificação
+		//000101 unconditional branch to a label on page C6-722 - verificação	
 		case 0x14000000: //aplico a mascara pra ver se o que eu peguei é o que eu esperava
 			//exercício
+			
 			// eliminação dos zeros à esquerda, casting explícito para int64_t e retorno dos 26 bits à posição original, mas com 2 bits 0 à direita
 			B = ((int64_t)(imm26 << 6) >> 4);
 			//declara reg a
@@ -278,9 +280,40 @@ int BasicCPU::decodeBranches() {
 			MemtoReg=false;// como a info não vem da memoria é falso
 			
 			return 0;
+		
+
+		case 0x54000000:
+			//b.cond C6.2.23 page C6-721
+			
+			
+			switch(IR & 0x0000000F){//cond
+
+				case 0x0000000D:
+
+					if(!(Z_flag == false and N_flag == V_flag))
+						B = ((int64_t)(imm19 << 8) >> 11);
+					else
+						B = 0;
+					
+					
+					break;
+			}
+
+			A = PC; //salvo o endereço da instrução (PC) em A
+
+			Rd = &PC; // salvo o endereço da instrução (PC) no registrador de destino
+
+			ALUctrl = ALUctrlFlag::ADD;//adição
+
+			MEMctrl = MEMctrlFlag::MEM_NONE;
+
+			WBctrl = WBctrlFlag::RegWrite;
+
+			MemtoReg=false;
+			
+			return 0;
 		default:
 			return 1;
-
 	}
 	return 1;
 }
@@ -607,9 +640,11 @@ int BasicCPU::EXI()
 	{
 		case ALUctrlFlag::SUB:
 			ALUout = A - B;
-			Z_flag = (ALUout == 0);
-			N_flag = (ALUout < 0);
-			V_flag = vFlag(ALUout, A, B);
+			int64_t temp;
+			temp = (int64_t)ALUout;
+			Z_flag = (temp == 0);
+			N_flag = (temp < 0);
+			V_flag = vFlag(temp, A, B);
 			return 0;
 		case ALUctrlFlag::ADD:
 			ALUout = A + B;
