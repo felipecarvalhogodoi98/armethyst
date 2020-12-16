@@ -1,27 +1,20 @@
 /* ----------------------------------------------------------------------------
-
     (EN) armethyst - A simple ARM Simulator written in C++ for Computer Architecture
     teaching purposes. Free software licensed under the MIT License (see license
     below).
-
     (PT) armethyst - Um simulador ARM simples escrito em C++ para o ensino de
     Arquitetura de Computadores. Software livre licenciado pela MIT License
     (veja a licença, em inglês, abaixo).
-
     (EN) MIT LICENSE:
-
     Copyright 2020 André Vital Saúde
-
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
     in the Software without restriction, including without limitation the rights
     to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
     copies of the Software, and to permit persons to whom the Software is
     furnished to do so, subject to the following conditions:
-
     The above copyright notice and this permission notice shall be included in
     all copies or substantial portions of the Software.
-
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,7 +22,6 @@
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
-
    ----------------------------------------------------------------------------
 */
 #include <iostream>
@@ -250,13 +242,14 @@ int BasicCPU::decodeBranches() {
 	//instrução não implementada
 	//declaração do imm26 valor imm6 na página C6-722
 	int32_t imm26 = (IR & 0x03FFFFFF);
-
+	int32_t imm19 = (IR & 0x00FFFFE0);
 	unsigned int n;
 	//switch para pegar o branch
 	switch (IR & 0xFC000000) { //zera tudo que eu não quero deixando só os que quero testar
 		//000101 unconditional branch to a label on page C6-722 - verificação
 		case 0x14000000: //aplico a mascara pra ver se o que eu peguei é o que eu esperava
 			//exercício
+
 			// eliminação dos zeros à esquerda, casting explícito para int64_t e retorno dos 26 bits à posição original, mas com 2 bits 0 à direita
 			B = ((int64_t)(imm26 << 6) >> 4);
 			//declara reg a
@@ -280,40 +273,37 @@ int BasicCPU::decodeBranches() {
 			MemtoReg=false;// como a info não vem da memoria é falso
 
 			return 0;
+
+
 		case 0x54000000:
-			//BLE (aka B.cond) on page C6-721
-			// 'reutilizando' imm26
-			imm26 = (IR & 0x00FFFFE0);
-
-			// Condicao flags NZCV
-			if(!((Z_flag == false) && (N_flag == V_flag)))
-				// eliminação dos zeros à esquerda
-				// casting explícito para uint64_t retorna os 19 bits à posição com 2 bits 0 à direita
-				B = ((int64_t)(imm26 << 8) >> 11);
-			else
-				//zero
-				B = (int64_t) ZR;
+			//b.cond C6.2.23 page C6-721
 
 
-			//declara reg a
+			switch(IR & 0x0000000F){//cond
+
+				case 0x0000000D:
+
+					if(!(Z_flag == false and N_flag == V_flag))
+						B = ((int64_t)(imm19 << 8) >> 11);
+					else
+						B = 0;
+
+
+					break;
+			}
+
 			A = PC; //salvo o endereço da instrução (PC) em A
-			//declara reg d
+
 			Rd = &PC; // salvo o endereço da instrução (PC) no registrador de destino
 
-			// Atribuição das Flags
-
-			// atribuir ALUctrl
-			//estagio de execução
 			ALUctrl = ALUctrlFlag::ADD;//adição
-			// atribuir MEMctrl
-			//estágio de acesso a memoria
-			MEMctrl = MEMctrlFlag::MEM_NONE; //none pq nao acesso a memoria
-			// atribuir WBctrl
-			//estagio de write back
-			WBctrl = WBctrlFlag::RegWrite; //onde eu vou escrever a informação, que é no registrador, por isso o "RegWrite"
-			// atribuir MemtoReg
-			//segunda pleg para o estagio WB
-			MemtoReg=false;// como a info não vem da memoria é falso
+
+			MEMctrl = MEMctrlFlag::MEM_NONE;
+
+			WBctrl = WBctrlFlag::RegWrite;
+
+			MemtoReg=false;
+
 			return 0;
 		case 0xD4000000:
 			//RET on page C6-1053
@@ -670,10 +660,11 @@ int BasicCPU::EXI()
 	{
 		case ALUctrlFlag::SUB:
 			ALUout = A - B;
-			V_flag = vFlag(ALUout, A, B);
-      N_flag = (ALUout & 0x80000000);
-      Z_flag = (ALUout == 0);
-
+			int64_t temp;
+			temp = (int64_t)ALUout;
+			Z_flag = (temp == 0);
+			N_flag = (temp < 0);
+			V_flag = vFlag(temp, A, B);
 			return 0;
 		case ALUctrlFlag::ADD:
 			ALUout = A + B;
