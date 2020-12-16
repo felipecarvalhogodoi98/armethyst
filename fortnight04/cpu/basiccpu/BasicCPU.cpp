@@ -115,7 +115,6 @@ int BasicCPU::ID()
 	fpOp = FPOpFlag::FP_UNDEF;
 
 	int group = IR & 0x1E000000; // bits 28-25
-	cout << ".....................................................IR " << group << endl;
 	switch (group)
 	{
 		//100x Data Processing -- Immediate
@@ -626,6 +625,102 @@ int BasicCPU::decodeDataProcFloat() {
 			MemtoReg = false;
 
 			return 0;
+		case 0x1E204000:
+			//C7.2.133 FNEG (scalar) on page C7-1559
+
+			// implementado apenas ftype='00'
+			if (IR & 0x00C00000) return 1;
+
+			fpOp = FPOpFlag::FP_REG_32;
+
+			// atribuir A = 0
+			A = ZR;
+			// ler B
+			n = (IR & 0x000003E0) >> 5;
+			B = getSasInt(n); // 32-bit variant
+
+
+			// registrador destino
+			d = (IR & 0x0000001F);
+			Rd = &(V[d]);
+
+			// atribuir ALUctrl
+			ALUctrl = ALUctrlFlag::SUB;
+
+			// atribuir MEMctrl
+			MEMctrl = MEMctrlFlag::MEM_NONE;
+
+			// atribuir WBctrl
+			WBctrl = WBctrlFlag::RegWrite;
+
+			// atribuir MemtoReg
+			MemtoReg = false;
+
+			return 0;
+		case 0x1E201800:
+			//C7.2.91 FDIV (scalar) on page C7-1466
+
+			// implementado apenas ftype='00'
+			if (IR & 0x00C00000) return 1;
+
+			fpOp = FPOpFlag::FP_REG_32;
+
+			// ler A e B
+			n = (IR & 0x000003E0) >> 5;
+			A = getSasInt(n); // 32-bit variant
+
+			m = (IR & 0x001F0000) >> 16;
+			B = getSasInt(m);
+
+			// registrador destino
+			d = (IR & 0x0000001F);
+			Rd = &(V[d]);
+
+			// atribuir ALUctrl
+			ALUctrl = ALUctrlFlag::DIV;
+
+			// atribuir MEMctrl
+			MEMctrl = MEMctrlFlag::MEM_NONE;
+
+			// atribuir WBctrl
+			WBctrl = WBctrlFlag::RegWrite;
+
+			// atribuir MemtoReg
+			MemtoReg = false;
+
+			return 0;
+		case 0x1E200800:
+			//C7.2.129 FMUL (scalar) on page C7-1548
+
+			// implementado apenas ftype='00'
+			if (IR & 0x00C00000) return 1;
+
+			fpOp = FPOpFlag::FP_REG_32;
+
+			// ler A e B
+			n = (IR & 0x000003E0) >> 5;
+			A = getSasInt(n); // 32-bit variant
+
+			m = (IR & 0x001F0000) >> 16;
+			B = getSasInt(m);
+
+			// registrador destino
+			d = (IR & 0x0000001F);
+			Rd = &(V[d]);
+
+			// atribuir ALUctrl
+			ALUctrl = ALUctrlFlag::MUL;
+
+			// atribuir MEMctrl
+			MEMctrl = MEMctrlFlag::MEM_NONE;
+
+			// atribuir WBctrl
+			WBctrl = WBctrlFlag::RegWrite;
+
+			// atribuir MemtoReg
+			MemtoReg = false;
+
+			return 0;
 		default:
 			// instrução não implementada
 			return 1;
@@ -711,6 +806,12 @@ int BasicCPU::EXF()
 				return 0;
 			case ALUctrlFlag::ADD:
 				ALUout = Util::floatAsUint64Low(fA + fB);
+				return 0;
+			case ALUctrlFlag::DIV:
+				ALUout = Util::floatAsUint64Low(fA / fB);
+				return 0;
+			case ALUctrlFlag::MUL:
+				ALUout = Util::floatAsUint64Low(fA * fB);
 				return 0;
 			default:
 				// Controle não implementado
