@@ -348,7 +348,7 @@ int BasicCPU::decodeLoadStore() {
 
 			d = IR & 0x0000001F;
 			if (d == 31) {
-				Rd[0] = ZR; //UNKNOWN = 0; 
+				Rd = (uint64_t *) &ZR; //UNKNOWN = 0; 
 			}
 			else {
 				Rd = &R[d];
