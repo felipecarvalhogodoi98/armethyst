@@ -37,6 +37,18 @@
 #include "Util.h"
 using namespace std;
 
+bool vFlag(uint64_t aluOut, uint64_t a, uint64_t b){
+	if(a >= 0 and b >= 0 and aluOut < 0)
+		return true;
+	if(a < 0 and b < 0 and aluOut >= 0)
+		return true;
+	if(a >= 0 and b < 0 and aluOut < 0)
+		return true;
+	if(a < 0 and b >= 0 and aluOut >= 0)
+		return true;
+	return false;
+}
+
 BasicCPU::BasicCPU(Memory *memory) {
 	this->memory = memory;
 }
@@ -210,6 +222,8 @@ int BasicCPU::decodeDataProcImm() {
 			
 			// atribuir WBctrl
 			WBctrl = WBctrlFlag::RegWrite;
+			if(group == 0x71000000)
+				WBctrl = WBctrlFlag::WB_NONE;
 			
 			// atribuir MemtoReg
 			MemtoReg = false;
@@ -593,6 +607,9 @@ int BasicCPU::EXI()
 	{
 		case ALUctrlFlag::SUB:
 			ALUout = A - B;
+			Z_flag = (ALUout == 0);
+			N_flag = (ALUout < 0);
+			V_flag = vFlag(ALUout, A, B);
 			return 0;
 		case ALUctrlFlag::ADD:
 			ALUout = A + B;
